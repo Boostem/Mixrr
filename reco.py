@@ -3,7 +3,7 @@ from mixrr.formatting import build_grid_formatter, random_mix_title, write_playl
 from mixrr.mixlogic import build_mix_order, filter_trends, parse_camelot
 from mixrr.models import Track
 from mixrr.spotify import choose_track_paginated, format_artists, get_spotify_token
-from mixrr.tunebat import fetch_track_and_recommendations
+from mixrr.rec_api import fetch_track_and_recommendations
 
 
 def build_candidates(related_tracks):

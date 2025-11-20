@@ -2,7 +2,7 @@ import time
 
 import cloudscraper
 
-TUNEBAT_HEADERS = {
+REC_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:131.0) Gecko/20100101 Firefox/131.0",
     "Accept": "application/json, text/plain, */*",
     "Referer": "https://tunebat.com",
@@ -23,7 +23,7 @@ def fetch_track_and_recommendations(track_id: str, retries: int = 2, backoff: fl
 
     attempt = 0
     while attempt <= retries:
-        response = scraper.get(track_url, headers=TUNEBAT_HEADERS)
+        response = scraper.get(track_url, headers=REC_HEADERS)
         if response.status_code == 200:
             track_data = response.json().get("data", {})
             return track_data, track_data.get("r", [])

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - Root contains CLI entry `reco.py` plus sample payload `response_example.json`.
-- Core code lives in `mixrr/` modules: `env.py` (env loader), `spotify.py` (search/auth/paging), `tunebat.py` (track + rec fetch with retry), `formatting.py` (titles, filenames, display grid), `mixlogic.py` (Camelot/BPM rules, trend filtering), `models.py` (`Track` dataclass).
+- Core code lives in `mixrr/` modules: `env.py` (env loader), `spotify.py` (search/auth/paging), `rec_api.py` (track + rec fetch with retry to the rec API), `formatting.py` (titles, filenames, display grid), `mixlogic.py` (Camelot/BPM rules, trend filtering), `models.py` (`Track` dataclass).
 - `.venv/` should stay uncommitted; `.env` supplies secrets (see `.env-example`).
 - Generated playlist files: single file per session, named `<TwoWordTitle>_<timestamp>.txt`, containing only ordered Spotify URLs.
 
@@ -18,7 +18,7 @@
 
 ## Testing Guidelines
 - No test suite present. If adding tests, use `pytest` under `tests/`, named `test_<feature>.py`.
-- Mock Spotify/Tunebat HTTP calls; avoid live network in unit tests.
+- Mock Spotify/recommendation-API HTTP calls; avoid live network in unit tests.
 - Add scenarios for Camelot adjacency, BPM tolerance, trend filtering (min 3).
 
 ## Commit & Pull Request Guidelines
@@ -28,5 +28,5 @@
 
 ## Security & Configuration Tips
 - Do not commit secrets; `.env` holds `SPOTIPY_CLIENT_ID` and `SPOTIPY_CLIENT_SECRET`. Rotate if leaked.
-- Network calls hit Spotify and Tunebat; avoid spamming APIs and handle failures gracefully.
+- Network calls hit Spotify and the rec API; avoid spamming APIs and handle failures gracefully.
 - Generated playlist files may contain user queries—clean up before publishing or sharing the repo.
