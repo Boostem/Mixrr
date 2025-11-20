@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 - Root contains CLI entry `reco.py` plus sample payload `response_example.json`.
-- Core code lives in `mixrr/` modules: `env.py` (env loader), `spotify.py` (search/auth/paging), `rec_api.py` (track + rec fetch with retry to the rec API), `formatting.py` (titles, filenames, display grid), `mixlogic.py` (Camelot/BPM rules, trend filtering), `models.py` (`Track` dataclass).
+- Core code lives in `mixrr/` modules: `env.py` (env loader), `spotify.py` (search/auth/paging), `rec_api.py` (track + rec fetch with retry to the rec API), `formatting.py` (titles, filenames, display grid), `mixlogic.py` (Camelot/BPM rules, vibe filtering, trend filtering), `models.py` (`Track` dataclass).
 - `.venv/` should stay uncommitted; `.env` supplies secrets (see `.env-example`).
 - Generated playlist files: single file per session, named `<TwoWordTitle>_<timestamp>.txt`, containing only ordered Spotify URLs.
 
@@ -19,7 +19,7 @@
 ## Testing Guidelines
 - No test suite present. If adding tests, use `pytest` under `tests/`, named `test_<feature>.py`.
 - Mock Spotify/recommendation-API HTTP calls; avoid live network in unit tests.
-- Add scenarios for Camelot adjacency, BPM tolerance, trend filtering (min 3).
+- Add scenarios for Camelot adjacency, BPM tolerance, vibe filtering (danceability/energy, tight vs loose), trend filtering (min 3).
 
 ## Commit & Pull Request Guidelines
 - Commit messages: present-tense, descriptive (e.g., `Add paginated Spotify search`, `Fix camelot adjacency checks`).

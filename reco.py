@@ -1,6 +1,6 @@
 from mixrr.env import load_env_from_file
 from mixrr.formatting import build_grid_formatter, random_mix_title, write_playlist_file
-from mixrr.mixlogic import build_mix_order, filter_trends, parse_camelot
+from mixrr.mixlogic import build_mix_order, filter_by_vibe, filter_trends, parse_camelot
 from mixrr.models import Track
 from mixrr.spotify import choose_track_paginated, format_artists, get_spotify_token
 from mixrr.rec_api import fetch_track_and_recommendations
@@ -23,6 +23,8 @@ def build_candidates(related_tracks):
                 camelot_str=track.get("c") or track.get("k", "N/A"),
                 bpm=bpm,
                 url=f"https://open.spotify.com/track/{tid}",
+                danceability=track.get("da"),
+                energy=track.get("e"),
             )
         )
     return candidates
@@ -44,6 +46,8 @@ def build_seed(selected, seed_data):
         camelot_str=seed_cam_str,
         bpm=seed_bpm,
         url=f"https://open.spotify.com/track/{seed_track_id}",
+        danceability=seed_data.get("da"),
+        energy=seed_data.get("e"),
     )
 
 
@@ -53,6 +57,8 @@ def build_seed_from_data(track_id: str, seed_data, fallback: Track | None = None
     camelot = parse_camelot(seed_data.get("c")) or (fallback.camelot if fallback else None)
     camelot_str = seed_data.get("c") or seed_data.get("k", "N/A") or (fallback.camelot_str if fallback else "N/A")
     bpm = seed_data.get("b") or (fallback.bpm if fallback else None)
+    da = seed_data.get("da") or (fallback.danceability if fallback else None)
+    energy = seed_data.get("e") or (fallback.energy if fallback else None)
 
     return Track(
         id=track_id,
@@ -62,6 +68,8 @@ def build_seed_from_data(track_id: str, seed_data, fallback: Track | None = None
         camelot_str=camelot_str,
         bpm=bpm,
         url=f"https://open.spotify.com/track/{track_id}",
+        danceability=da,
+        energy=energy,
     )
 
 
@@ -102,6 +110,11 @@ def main():
         print("No search term provided.")
         return
 
+    vibe_mode_input = input("Vibe tightness? (tight/loose) [tight]: ").strip().lower()
+    vibe_tight = vibe_mode_input != "loose"
+    tol_da = 0.2 if vibe_tight else 0.4
+    tol_energy = 0.2 if vibe_tight else 0.4
+
     token = get_spotify_token()
     if not token:
         return
@@ -139,7 +152,11 @@ def main():
         if not candidates:
             print("No recommendations returned; stopping.")
             break
-        mix_tracks = build_mix_order(seed_info, candidates)
+        vibe_candidates = filter_by_vibe(candidates, seed_info, tol_da=tol_da, tol_energy=tol_energy)
+        if not vibe_candidates:
+            print("No vibe-compatible recommendations; stopping.")
+            break
+        mix_tracks = build_mix_order(seed_info, vibe_candidates)
         mix_tracks = filter_trends(mix_tracks, min_len=3)
         if not mix_tracks:
             print("No trend segment found with 3+ tracks; stopping.")

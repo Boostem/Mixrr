@@ -100,6 +100,33 @@ def build_mix_order(seed: Track, candidates: List[Track]) -> List[Track]:
     return order
 
 
+def filter_by_vibe(
+    candidates: List[Track],
+    seed: Track,
+    tol_da: float = 0.2,
+    tol_energy: float = 0.2,
+) -> List[Track]:
+    """
+    Keep only tracks whose danceability/energy are close to the seed (if features exist).
+    If seed features are missing, returns candidates unchanged.
+    """
+    if seed.danceability is None and seed.energy is None:
+        return candidates
+
+    filtered: List[Track] = []
+    for t in candidates:
+        ok = True
+        if seed.danceability is not None and t.danceability is not None:
+            if abs(t.danceability - seed.danceability) > tol_da:
+                ok = False
+        if seed.energy is not None and t.energy is not None:
+            if abs(t.energy - seed.energy) > tol_energy:
+                ok = False
+        if ok:
+            filtered.append(t)
+    return filtered
+
+
 def filter_trends(tracks: List[Track], min_len: int = 3) -> List[Track]:
     """
     Keep only trend segments of length >= min_len.

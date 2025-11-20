@@ -20,7 +20,7 @@ python reco.py
 ```
 - Enter a song/artist to search Spotify.
 - Pick a result (paged navigation: `n`/`p`, `q` to quit, Enter=1).
-- The app fetches recommendation data, builds a mix using Camelot-adjacent keys and BPM within 6% (including half/double BPM), and prints the order with key/BPM deltas.
+- The app fetches recommendation data, builds a mix using Camelot-adjacent keys and BPM within 6% (including half/double BPM), applies a vibe filter on danceability/energy (toggle tight/loose), and prints the order with key/BPM deltas.
 - After each mix segment you can continue (`y`) to seed from the last track and extend the set; only one playlist file is written when you stop.
 
 ## Output
@@ -34,6 +34,6 @@ python reco.py
   - `env.py` (load `.env`)
   - `spotify.py` (client creds, search, paginated selection)
   - `rec_api.py` (track + rec fetch with retry; uses the rec API endpoint)
-  - `mixlogic.py` (Camelot/BPM rules, trend filtering, mix ordering)
+  - `mixlogic.py` (Camelot/BPM rules, vibe filtering, trend filtering, mix ordering)
   - `formatting.py` (titles, filenames, display grid)
   - `models.py` (`Track` dataclass)

@@ -14,4 +14,6 @@ class Track:
     camelot_str: str
     bpm: float
     url: str
+    danceability: float | None = None
+    energy: float | None = None
     jump: bool = False
