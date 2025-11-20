@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
-from coolname import generate_slug
+from coolname import generate
 
 
 def sanitize_filename(name: str) -> str:
@@ -27,14 +27,16 @@ def human_timestamp(ts: datetime) -> str:
     return f"{month} {day}{suffix} {hour_12}-{minute:02d}{ampm} {ts.year}"
 
 
-def random_mix_title() -> str:
-    words = generate_slug().split("-")
-    return " ".join(word.capitalize() for word in words)
+def random_mix_title(words: int = 2) -> str:
+    """Generate a short 1-2 word title (adjective + noun)."""
+    parts = generate(words)
+    parts = parts[:words]
+    return " ".join(word.capitalize() for word in parts)
 
 
-def write_playlist_file(base_name: str, random_title: str, lines: list[str]):
+def write_playlist_file(random_title: str, lines: list[str]):
     timestamp_str = human_timestamp(datetime.now())
-    filename = f"{base_name} {random_title}_{timestamp_str}.txt"
+    filename = f"{random_title}_{timestamp_str}.txt"
     filename = sanitize_filename(filename)
     Path(filename).write_text("\n".join(lines))
     print(f"\nSaved playlist to {filename}")

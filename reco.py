@@ -1,6 +1,6 @@
 from mixrr.env import load_env_from_file
 from mixrr.formatting import build_grid_formatter, random_mix_title, write_playlist_file
-from mixrr.mixlogic import build_mix_order, parse_camelot
+from mixrr.mixlogic import build_mix_order, filter_trends, parse_camelot
 from mixrr.models import Track
 from mixrr.spotify import choose_track_paginated, format_artists, get_spotify_token
 from mixrr.tunebat import fetch_track_and_recommendations
@@ -44,6 +44,24 @@ def build_seed(selected, seed_data):
         camelot_str=seed_cam_str,
         bpm=seed_bpm,
         url=f"https://open.spotify.com/track/{seed_track_id}",
+    )
+
+
+def build_seed_from_data(track_id: str, seed_data, fallback: Track | None = None):
+    name = seed_data.get("n") or (fallback.name if fallback else "Unknown")
+    artists = ", ".join(seed_data.get("as", [])) or (fallback.artists if fallback else "Unknown")
+    camelot = parse_camelot(seed_data.get("c")) or (fallback.camelot if fallback else None)
+    camelot_str = seed_data.get("c") or seed_data.get("k", "N/A") or (fallback.camelot_str if fallback else "N/A")
+    bpm = seed_data.get("b") or (fallback.bpm if fallback else None)
+
+    return Track(
+        id=track_id,
+        name=name,
+        artists=artists,
+        camelot=camelot,
+        camelot_str=camelot_str,
+        bpm=bpm,
+        url=f"https://open.spotify.com/track/{track_id}",
     )
 
 
@@ -97,21 +115,53 @@ def main():
         print("Selected track is missing an id.")
         return
 
-    seed_data, related_tracks = fetch_track_and_recommendations(seed_track_id)
-    seed_info = build_seed(selected, seed_data)
+    current_seed_id = seed_track_id
+    fallback_track = None
+    master_urls: list[str] = []
+    mix_title = random_mix_title(2)
 
-    if seed_info.camelot is None or seed_info.bpm is None:
-        print("Seed is missing Camelot key or BPM; cannot build DJ mix order.")
-        return
+    while True:
+        seed_data, related_tracks = fetch_track_and_recommendations(current_seed_id)
+        if not seed_data or related_tracks is None:
+            print("Unable to fetch track data or recommendations; stopping.")
+            break
+        seed_info = (
+            build_seed_from_data(current_seed_id, seed_data, fallback=fallback_track)
+            if fallback_track
+            else build_seed(selected, seed_data)
+        )
 
-    candidates = build_candidates(related_tracks)
-    mix_tracks = build_mix_order(seed_info, candidates)
+        if seed_info.camelot is None or seed_info.bpm is None:
+            print("Seed is missing Camelot key or BPM; cannot build DJ mix order.")
+            break
 
-    mix_title = random_mix_title()
-    display_mix(mix_tracks)
+        candidates = build_candidates(related_tracks)
+        if not candidates:
+            print("No recommendations returned; stopping.")
+            break
+        mix_tracks = build_mix_order(seed_info, candidates)
+        mix_tracks = filter_trends(mix_tracks, min_len=3)
+        if not mix_tracks:
+            print("No trend segment found with 3+ tracks; stopping.")
+            break
 
-    url_lines = [t.url for t in mix_tracks]
-    write_playlist_file(seed_info.name, mix_title, url_lines)
+        display_mix(mix_tracks)
+
+        url_lines = [t.url for t in mix_tracks]
+        if master_urls:
+            master_urls.extend(url_lines[1:])  # avoid duplicating the previous last track
+        else:
+            master_urls.extend(url_lines)
+
+        cont = input("Continue from last track? (y/N): ").strip().lower()
+        if cont not in {"y", "yes"}:
+            break
+
+        fallback_track = mix_tracks[-1]
+        current_seed_id = fallback_track.id
+
+    if master_urls:
+        write_playlist_file(mix_title, master_urls)
 
 
 if __name__ == "__main__":

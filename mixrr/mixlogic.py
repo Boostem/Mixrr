@@ -98,3 +98,39 @@ def build_mix_order(seed: Track, candidates: List[Track]) -> List[Track]:
         prev = chosen
 
     return order
+
+
+def filter_trends(tracks: List[Track], min_len: int = 3) -> List[Track]:
+    """
+    Keep only trend segments of length >= min_len.
+    A trend starts at index 0, and any track with jump=True starts a new trend.
+    """
+    if not tracks:
+        return []
+
+    segments: List[List[Track]] = []
+    current: List[Track] = []
+    for idx, t in enumerate(tracks):
+        if idx == 0:
+            current = [t]
+            continue
+        if t.jump:
+            segments.append(current)
+            current = [t]
+        else:
+            current.append(t)
+    segments.append(current)
+
+    filtered = [seg for seg in segments if len(seg) >= min_len]
+    if not filtered:
+        return []
+
+    # Re-flag jumps after filtering.
+    out: List[Track] = []
+    for seg_idx, seg in enumerate(filtered):
+        for i, t in enumerate(seg):
+            t.jump = seg_idx > 0 and i == 0
+            out.append(t)
+    if out:
+        out[0].jump = False
+    return out
