@@ -1,0 +1,5 @@
+*venv*
+*.json
+*.txt
+.env
+*cache*
