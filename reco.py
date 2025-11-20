@@ -1,12 +1,13 @@
 from mixrr.env import load_env_from_file
 from mixrr.formatting import build_grid_formatter, random_mix_title, write_playlist_file
 from mixrr.mixlogic import build_mix_order, parse_camelot
+from mixrr.models import Track
 from mixrr.spotify import choose_track_paginated, format_artists, get_spotify_token
 from mixrr.tunebat import fetch_track_and_recommendations
 
 
 def build_candidates(related_tracks):
-    candidates = []
+    candidates: list[Track] = []
     for track in related_tracks:
         tid = track.get("id")
         cam = parse_camelot(track.get("c"))
@@ -14,15 +15,15 @@ def build_candidates(related_tracks):
         if not tid or cam is None or bpm is None:
             continue
         candidates.append(
-            {
-                "id": tid,
-                "name": track.get("n", "Unknown"),
-                "artists": ", ".join(track.get("as", [])),
-                "camelot": cam,
-                "camelot_str": track.get("c") or track.get("k", "N/A"),
-                "bpm": bpm,
-                "url": f"https://open.spotify.com/track/{tid}",
-            }
+            Track(
+                id=tid,
+                name=track.get("n", "Unknown"),
+                artists=", ".join(track.get("as", [])),
+                camelot=cam,
+                camelot_str=track.get("c") or track.get("k", "N/A"),
+                bpm=bpm,
+                url=f"https://open.spotify.com/track/{tid}",
+            )
         )
     return candidates
 
@@ -35,35 +36,35 @@ def build_seed(selected, seed_data):
     seed_cam = parse_camelot(seed_data.get("c"))
     seed_cam_str = seed_data.get("c") or seed_data.get("k", "N/A")
 
-    return {
-        "id": seed_track_id,
-        "name": seed_name,
-        "artists": seed_artists,
-        "camelot": seed_cam,
-        "camelot_str": seed_cam_str,
-        "bpm": seed_bpm,
-        "url": f"https://open.spotify.com/track/{seed_track_id}",
-    }
+    return Track(
+        id=seed_track_id,
+        name=seed_name,
+        artists=seed_artists,
+        camelot=seed_cam,
+        camelot_str=seed_cam_str,
+        bpm=seed_bpm,
+        url=f"https://open.spotify.com/track/{seed_track_id}",
+    )
 
 
-def display_mix(mix_tracks):
+def display_mix(mix_tracks: list[Track]):
     display_rows = []
     prev_bpm_for_delta = None
     for track in mix_tracks:
         delta = None
-        if prev_bpm_for_delta is not None and track["bpm"] is not None:
-            delta = track["bpm"] - prev_bpm_for_delta
+        if prev_bpm_for_delta is not None and track.bpm is not None:
+            delta = track.bpm - prev_bpm_for_delta
         display_rows.append(
             {
-                "artist": track["artists"],
-                "title": track["name"],
-                "camelot": track["camelot_str"],
-                "bpm": track["bpm"],
+                "artist": track.artists,
+                "title": track.name,
+                "camelot": track.camelot_str,
+                "bpm": track.bpm,
                 "delta": delta if delta is not None else 0,
-                "jump": track.get("jump", False),
+                "jump": track.jump,
             }
         )
-        prev_bpm_for_delta = track["bpm"]
+        prev_bpm_for_delta = track.bpm
 
     fmt = build_grid_formatter(display_rows)
 
@@ -99,7 +100,7 @@ def main():
     seed_data, related_tracks = fetch_track_and_recommendations(seed_track_id)
     seed_info = build_seed(selected, seed_data)
 
-    if seed_info["camelot"] is None or seed_info["bpm"] is None:
+    if seed_info.camelot is None or seed_info.bpm is None:
         print("Seed is missing Camelot key or BPM; cannot build DJ mix order.")
         return
 
@@ -109,8 +110,8 @@ def main():
     mix_title = random_mix_title()
     display_mix(mix_tracks)
 
-    url_lines = [t["url"] for t in mix_tracks]
-    write_playlist_file(seed_info["name"], mix_title, url_lines)
+    url_lines = [t.url for t in mix_tracks]
+    write_playlist_file(seed_info.name, mix_title, url_lines)
 
 
 if __name__ == "__main__":
